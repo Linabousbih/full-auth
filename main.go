@@ -1,7 +1,7 @@
 package main
 
 import (
-	routes "/JWT/routes"
+	routes "JWT/routes"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -28,5 +28,5 @@ func main() {
 		c.JSON(200, gin.H{"success": "Access granted for api-2"})
 	})
 
-	router.RUN(":" + port)
+	router.Run(":" + port)
 }
