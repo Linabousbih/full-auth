@@ -31,3 +31,4 @@ func MatchUserTypeToUid(c *gin.Context, userId string) (err error) {
 	return err
 
 }
+
