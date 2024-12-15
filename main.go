@@ -1,7 +1,7 @@
 package main
 
 import (
-	routes "JWT/routes"
+	routes "full-jwt/routes"
 	"os"
 
 	"github.com/gin-gonic/gin"
