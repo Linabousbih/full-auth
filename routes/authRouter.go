@@ -1,7 +1,7 @@
 package routes
 
 import (
-	controllers "jwt/controllers"
+	controllers "full-jwt/controllers"
 
 	"github.com/gin-gonic/gin"
 )

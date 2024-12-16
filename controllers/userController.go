@@ -116,7 +116,7 @@ func Login() gin.HandlerFunc {
 			return
 		}
 		pwd := HashPassword(*user.Password)
-		*&user.Password = pwd
+		user.Password = &pwd
 		passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
 
 		if !passwordIsValid {
@@ -137,54 +137,52 @@ func Login() gin.HandlerFunc {
 	}
 }
 
-func GetUsers() gin.HandlerFunc{
-	return func (c *gin.Context){
-		if err:=helpers.CheckUserType(c, "ADMIN"); err!=nil{
-			c.JSON(http.StatusBadRequest, gin.H{"error":err})
+func GetUsers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := helpers.CheckUserType(c, "ADMIN"); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			return
 		}
-		ctx,cancel:=context.WithTimeout(context.Background(),100*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 
-		recordPerPage,err:=strconv.Atoi(c.Query("recordPerPage"))
-		if err!=nil || recordPerPage <1{
-			recordPerPage=10
+		recordPerPage, err := strconv.Atoi(c.Query("recordPerPage"))
+		if err != nil || recordPerPage < 1 {
+			recordPerPage = 10
 		}
 
-		page, err1:=strconv.Atoi(c.Query("page"))
-		if err1!=nil || page <1{
-			page=1
+		page, err1 := strconv.Atoi(c.Query("page"))
+		if err1 != nil || page < 1 {
+			page = 1
 		}
 
-		startIndex:=(page-1) * recordPerPage
-		startIndex,err= strconv.Atoi(c.Query("startIndex"))
+		startIndex := (page - 1) * recordPerPage
+		startIndex, err = strconv.Atoi(c.Query("startIndex"))
 
-		matchStage:= bson.D{{"$match",bson.D{{}}}}
+		matchStage := primitive.D{{Key: "$match", Value: bson.D{{}}}}
 
-		grouptage:= bson.D{{"$group",bson.D{
-			{"_id",bson.D{{"_id","null"}}},
-			{"total_count",bson.D{{"$sum",1}}}, 
-			{"data",bson.D{{"$push","$$ROOT"}}}
+		grouptage := primitive.D{{Key: "$group", Value: bson.D{
+			{Name: "_id", Value: bson.D{{Name: "_id", Value: "null"}}},
+			{Name: "total_count", Value: bson.D{{Name: "$sum", Value: 1}}},
+			{Name: "data", Value: bson.D{{Name: "$push", Value: "$$ROOT"}}},
 		}}}
 
-		projectStage := bson.D{
-			{"$project", bson.D{
-				{"_id",0},
-				{"total_count", 1},
-				{"user_items", bson.D{{"$slice", []interface{}{"$data",startIndex,recordPerPage}}}},
-			}}
+		projectStage := primitive.D{
+			{Key: "$project", Value: bson.D{
+				{Name: "_id", Value: 0},
+				{Name: "total_count", Value: 1},
+				{Name: "user_items", Value: bson.D{{Name: "$slice", Value: []interface{}{"$data", startIndex, recordPerPage}}}},
+			}},
 		}
 
-		result,err:=userCollection.Aggregate(ctx,mongo.Pipeline{
-			matchStage, grouptage, projectStage
-		})
+		result, err := userCollection.Aggregate(ctx, mongo.Pipeline{matchStage, grouptage, projectStage})
 
-		if err!=nil{
-			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while listing users"})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while listing users"})
 		}
 
 		var allUsers []bson.M
-		if err =result.All(ctx,&allUsers); err!=nil{
+		if err = result.All(ctx, &allUsers); err != nil {
 			log.Fatal(err)
 		}
 
